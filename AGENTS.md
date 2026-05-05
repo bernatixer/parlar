@@ -137,3 +137,26 @@ Parlar should help teams keep conversations from being dropped. Common behaviors
 - Recording why an action was taken so future agents and humans can inspect it.
 
 Default to small, reversible, explainable actions. When uncertain, gather more context or create a draft/decision record rather than taking a surprising action in Slack.
+
+## Memory System
+
+Parlar maintains a scoped memory store of conversation summaries and important snippets so the agent can recall relevant prior context. The system is owner-based:
+
+- **Workspace-global memories** are visible across any channel, thread, or DM in that workspace. Created when context is broadly applicable (incidents, decisions, team norms).
+- **DM memories** are owned by the human in the DM with the agent and visible only in that human's interactions with the agent.
+- **Group-thread memories** are owned by the set of participating humans; any participant's scope can recall them.
+- **Sharing** (future): the agent may surface a relevant memory the user owns and offer to share it into a broader scope. Acceptance adds an owner (e.g., the workspace) to the existing memory; the row is not duplicated.
+
+Hard isolation: every recall query is workspace-scoped, and a memory is never visible across workspaces.
+
+The implementation is a Postgres + pgvector store accessed only through Temporal activities. The `WorkspaceMemoryPort` interface in `src/tools/ports.ts` is the boundary; tools and workflows must never read or write memory directly. Default owner inference for writes:
+
+- Channel ID starting with `D` (DM) or `G` (group DM) → one human owner per `summary.participants`.
+- Channel ID starting with `C` (public/private channel) → workspace-global.
+- No channel ID or no participants → workspace-global.
+
+Callers may override by passing `owners` explicitly to `recordConversationSummary` / `recordConversationDecision`.
+
+## Hackathon Context
+
+This project is being built under hackathon time pressure. Optimize for lean, fast-to-build code paths over architectural completeness. Prefer fewer moving parts (one Postgres, one image, one ORM) and add complexity only when a feature explicitly needs it. Schemas should leave room for future features (sharing, tagging, ranking) without committing to building them now.

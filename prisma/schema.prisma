@@ -1,0 +1,75 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, vector]
+}
+
+enum OwnerKind {
+  workspace
+  human
+
+  @@map("owner_kind")
+}
+
+model Workspace {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slackTeamId String   @unique @map("slack_team_id")
+  name        String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  humans   Human[]
+  memories Memory[]
+
+  @@map("workspaces")
+}
+
+model Human {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  slackUserId String   @map("slack_user_id")
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, slackUserId])
+  @@index([workspaceId, slackUserId])
+  @@map("humans")
+}
+
+model Memory {
+  id          String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String                       @map("workspace_id") @db.Uuid
+  content     String
+  tags        String[]                     @default([])
+  sourceRef   Json?                        @map("source_ref")
+  embedding   Unsupported("vector(1536)")
+  dedupeKey   String?                      @map("dedupe_key")
+  createdAt   DateTime                     @default(now()) @map("created_at") @db.Timestamptz
+  archivedAt  DateTime?                    @map("archived_at") @db.Timestamptz
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owners    MemoryOwner[]
+
+  @@index([workspaceId])
+  @@map("memories")
+}
+
+model MemoryOwner {
+  memoryId  String    @map("memory_id") @db.Uuid
+  ownerKind OwnerKind @map("owner_kind")
+  ownerId   String    @map("owner_id") @db.Uuid
+  grantedAt DateTime  @default(now()) @map("granted_at") @db.Timestamptz
+  grantedBy String?   @map("granted_by") @db.Uuid
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@id([memoryId, ownerKind, ownerId])
+  @@index([ownerKind, ownerId, memoryId])
+  @@map("memory_owners")
+}

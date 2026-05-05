@@ -56,7 +56,8 @@ export function createWorkspaceMemoryTools(dependencies: ToolDependencies) {
         name: "record_conversation_decision",
         category: "workspace_memory",
         description: "Persist why the agent decided to follow up, wait, cancel, or take no action.",
-        inputSchema: "{ conversation, decisionType, reason, metadata?, idempotencyKey? }",
+        inputSchema:
+          "{ conversation, decisionType, reason, metadata?, idempotencyKey?, owners?, tags? }",
         outputSchema: "{ decisionId, deduplicated }",
         sideEffects: true,
         idempotent: true,
@@ -87,7 +88,8 @@ export function createWorkspaceMemoryTools(dependencies: ToolDependencies) {
         name: "get_related_conversation_memory",
         category: "workspace_memory",
         description: "Fetch prior related summaries or decisions for continuity.",
-        inputSchema: "{ conversation, query, limit? }",
+        inputSchema:
+          "{ conversation, query, limit?, viewerSlackUserIds?, tags? }",
         outputSchema: "{ memories }",
         sideEffects: false,
         idempotent: true,
@@ -111,7 +113,8 @@ export function createWorkspaceMemoryTools(dependencies: ToolDependencies) {
         name: "record_conversation_summary",
         category: "workspace_memory",
         description: "Store a compact conversation summary for future workflow steps.",
-        inputSchema: "{ conversation, summary, idempotencyKey? }",
+        inputSchema:
+          "{ conversation, summary, idempotencyKey?, owners?, tags?, contentOverride? }",
         outputSchema: "{ summaryId, deduplicated }",
         sideEffects: true,
         idempotent: true,

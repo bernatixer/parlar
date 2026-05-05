@@ -4,14 +4,31 @@
   "private": true,
   "description": "Temporal orchestration layer for AI-assisted Slack conversation management.",
   "type": "module",
+  "workspaces": [
+    "web"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "smoke:ai-env": "tsx scripts/smoke-ai-env.ts",
     "test": "tsx --test test/**/*.test.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx src/scripts/seed.ts",
+    "web:dev": "npm run dev --workspace web",
+    "web:build": "npm run build --workspace web",
+    "web:typecheck": "npm run typecheck --workspace web"
+  },
+  "prisma": {
+    "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.75",
+    "@ai-sdk/openai": "^3.0.61",
+    "@prisma/client": "^5.22.0",
     "@slack/types": "^2.21.0",
     "@slack/web-api": "^7.15.2",
     "@temporalio/ai-sdk": "^1.17.0",
@@ -24,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.57",
+    "prisma": "^5.22.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },

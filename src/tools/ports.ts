@@ -105,6 +105,10 @@ export interface ConversationIntelligencePort {
   }): Promise<{ text: string; confidence: number; rationale: string }>;
 }
 
+export type MemoryOwnerInput =
+  | { kind: "workspace" }
+  | { kind: "human"; slackUserId: SlackUserId };
+
 export interface WorkspaceMemoryPort {
   getWorkspacePreferences(input: { workspaceId: string }): Promise<JsonValue>;
   getPersonContext(input: {
@@ -117,16 +121,23 @@ export interface WorkspaceMemoryPort {
     reason: string;
     metadata?: JsonValue;
     idempotencyKey: string;
+    owners?: MemoryOwnerInput[];
+    tags?: string[];
   }): Promise<{ decisionId: string; deduplicated: boolean }>;
   getRelatedConversationMemory(input: {
     conversation: ConversationRef;
     query: string;
     limit?: number;
+    viewerSlackUserIds?: SlackUserId[];
+    tags?: string[];
   }): Promise<{ memories: JsonValue[] }>;
   recordConversationSummary(input: {
     conversation: ConversationRef;
     summary: ConversationSummary;
     idempotencyKey: string;
+    owners?: MemoryOwnerInput[];
+    tags?: string[];
+    contentOverride?: string;
   }): Promise<{ summaryId: string; deduplicated: boolean }>;
 }
 

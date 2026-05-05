@@ -292,6 +292,44 @@ export const SCENARIOS: Record<string, HarnessScenario> = {
     useRealSlack: true,
   },
 
+  "live-nudge": {
+    name: "live-nudge",
+    description:
+      "Bernat asks Jaume to check the deploy. No reply arrives. The agent should set a short reminder, " +
+      "let it fire, and post a real follow-up nudge in #random. Best demo for end-to-end behaviour.",
+    conversation: {
+      workspaceId: "T_LIVE",
+      platform: "slack",
+      conversationId: "C0B1X5XUA92",
+      conversationKind: "channel",
+    },
+    channels: [
+      { workspaceId: "T_LIVE", channelId: "C0B1X5XUA92", name: "random" },
+    ],
+    users: [
+      { workspaceId: "T_LIVE", userId: "U0B1CNUTFF1", displayName: "Bernat" },
+      { workspaceId: "T_LIVE", userId: "U0B1QQNLD4M", displayName: "Jaume" },
+    ],
+    seedMessages: [],
+    signals: [
+      {
+        platform: "slack",
+        kind: "message",
+        signalId: "live-nudge-1",
+        threadKey: "root",
+        at: new Date().toISOString(),
+        authorId: "participant:U0B1CNUTFF1",
+        authorPlatformUserId: "U0B1CNUTFF1",
+        authorDisplayName: "Bernat",
+        isFromAgent: false,
+        text: "Hey <@U0B1QQNLD4M>, can you check the deploy status when you're back? I'm heading into a meeting and won't be reachable.",
+        mentionedParticipantIds: ["participant:U0B1QQNLD4M"],
+      },
+    ],
+    expectStopWithinMs: 90_000,
+    useRealSlack: true,
+  },
+
   "silent-channel-noise": {
     name: "silent-channel-noise",
     description: "A non-actionable broadcast. Agent should stop without action.",

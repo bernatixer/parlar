@@ -15,5 +15,37 @@ services:
       timeout: 2s
       retries: 20
 
+  temporal:
+    image: temporalio/temporal:latest
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --ui-port
+      - "8888"
+      - --db-filename
+      - /data/temporal.db
+    ports:
+      - "7233:7233"
+      - "8888:8888"
+    volumes:
+      - parlar-temporal:/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PARLAR_AI_MODEL: ${PARLAR_AI_MODEL:-claude-sonnet-4-6}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+    depends_on:
+      - temporal
+    restart: unless-stopped
+
 volumes:
   parlar-pg:
+  parlar-temporal:

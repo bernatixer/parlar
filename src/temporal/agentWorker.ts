@@ -1,5 +1,6 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { Worker, type WorkerOptions } from "@temporalio/worker";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { LanguageModel } from "ai";
 import { DEFAULT_AI_MODEL } from "../ai/models.js";
@@ -55,7 +56,14 @@ export async function createAgentWorker({
 }
 
 function defaultWorkflowsPath(): string {
-  return fileURLToPath(
+  // Prefer the compiled .js when present (dist build); otherwise fall back to
+  // the .ts source so `tsx src/scripts/worker.ts` works directly from source.
+  const compiled = fileURLToPath(
     new URL("../workflows/agentConversationWorkflow.js", import.meta.url),
   );
+  if (existsSync(compiled)) return compiled;
+  const source = fileURLToPath(
+    new URL("../workflows/agentConversationWorkflow.ts", import.meta.url),
+  );
+  return source;
 }

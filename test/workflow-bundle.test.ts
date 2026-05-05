@@ -11,4 +11,12 @@ describe("Temporal workflow bundle", () => {
 
     assert.ok(bundle.code.length > 0);
   });
+
+  it("bundles AI SDK workflows with Temporal's AI plugin imports", async () => {
+    const bundle = await bundleWorkflowCode({
+      workflowsPath: path.resolve("src/workflows/aiSdkSmokeWorkflow.ts"),
+    });
+
+    assert.ok(bundle.code.includes("aiSdkSmokeWorkflow"));
+  });
 });

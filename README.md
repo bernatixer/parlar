@@ -112,6 +112,32 @@ The first implementation includes a modular tool registry with activity-backed t
 
 All tools are designed to run through Activities or service boundaries. Workflow code should call Activities, not tool implementations directly.
 
+## AI SDK Integration
+
+Parlar installs Vercel's AI SDK and Temporal's AI SDK plugin:
+
+```txt
+ai
+@ai-sdk/openai
+@temporalio/ai-sdk
+```
+
+The worker factory registers `AiSdkPlugin` with the OpenAI provider by default. Runtime model calls require the worker process to have the relevant provider credentials, such as `OPENAI_API_KEY`.
+
+Workflow code can use:
+
+```ts
+import { temporalProvider } from "@temporalio/ai-sdk";
+import { generateText } from "ai";
+
+const result = await generateText({
+  model: temporalProvider.languageModel("gpt-4o-mini"),
+  prompt: "Summarize this conversation.",
+});
+```
+
+Temporal handles the model call through plugin-backed Activities. Tool functions still need to respect Workflow rules: if they call Slack, databases, HTTP APIs, or any other non-deterministic system, route that work through an Activity.
+
 ## Product Principles
 
 - Be useful without being noisy.

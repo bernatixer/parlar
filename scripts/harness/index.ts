@@ -10,7 +10,7 @@ import { createAgentActivities } from "../../src/activities/agentActivities.js";
 import { createDecideNextAction } from "../../src/activities/decideNextAction.js";
 import { createParlarToolRegistry } from "../../src/tools/index.js";
 import {
-  PARLAR_AGENT_CONVERSATION_TASK_QUEUE,
+  PARLAR_TASK_QUEUE,
   agentConversationWorkflowId,
 } from "../../src/temporal/agentConversationIds.js";
 import { createAgentConversationClient } from "../../src/temporal/agentConversationClient.js";
@@ -97,7 +97,7 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
     `Model: ${MODEL_NAME}    Debounce: ${DEBOUNCE_MS}ms    Max steps: ${MAX_AGENT_STEPS}    Max turns: ${args.maxTurns}`,
   );
 
-  const taskQueue = `${PARLAR_AGENT_CONVERSATION_TASK_QUEUE}-harness-${process.pid}-${Date.now()}`;
+  const taskQueue = `${PARLAR_TASK_QUEUE}-harness-${process.pid}-${Date.now()}`;
 
   const deps = createLocalToolDependencies({
     slack: {

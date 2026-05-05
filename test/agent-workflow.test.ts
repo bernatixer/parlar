@@ -15,7 +15,7 @@ import type {
   DecideNextActionInput,
 } from "../src/activities/agentActivities.js";
 import {
-  PARLAR_AGENT_CONVERSATION_TASK_QUEUE,
+  PARLAR_TASK_QUEUE,
   agentConversationWorkflowId,
 } from "../src/temporal/agentConversationIds.js";
 import { createAgentConversationClient } from "../src/temporal/agentConversationClient.js";
@@ -60,7 +60,7 @@ afterEach(async () => {
 async function buildRig(debounceMs: number): Promise<TestRig> {
   rigCounter += 1;
   const tag = `${process.pid}-${Date.now()}-${rigCounter}`;
-  const taskQueue = `${PARLAR_AGENT_CONVERSATION_TASK_QUEUE}-test-${tag}`;
+  const taskQueue = `${PARLAR_TASK_QUEUE}-test-${tag}`;
 
   const conversation: AgentConversationRef = {
     workspaceId: `T-test-${tag}`,

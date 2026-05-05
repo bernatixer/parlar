@@ -8,7 +8,7 @@ import type {
 import type { IsoDateTime } from "../domain/types.js";
 import {
   agentConversationWorkflowId,
-  PARLAR_AGENT_CONVERSATION_TASK_QUEUE,
+  PARLAR_TASK_QUEUE,
 } from "./agentConversationIds.js";
 import {
   agentConversationWorkflow,
@@ -40,7 +40,7 @@ export interface CloseConversationInput {
 
 export function createAgentConversationClient({
   client,
-  taskQueue = PARLAR_AGENT_CONVERSATION_TASK_QUEUE,
+  taskQueue = PARLAR_TASK_QUEUE,
 }: AgentConversationClientOptions) {
   return {
     async signalMessage({

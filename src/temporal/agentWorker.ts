@@ -10,7 +10,7 @@ import {
 import type { AgentActivities } from "../activities/agentActivities.js";
 import { createAgentActivities } from "../activities/agentActivities.js";
 import { createParlarToolRegistry, type ToolDependencies } from "../tools/index.js";
-import { PARLAR_AGENT_CONVERSATION_TASK_QUEUE } from "./agentConversationIds.js";
+import { PARLAR_TASK_QUEUE } from "./agentConversationIds.js";
 
 export interface CreateAgentWorkerOptions
   extends Pick<WorkerOptions, "connection" | "namespace"> {
@@ -25,7 +25,7 @@ export interface CreateAgentWorkerOptions
 export async function createAgentWorker({
   connection,
   namespace,
-  taskQueue = PARLAR_AGENT_CONVERSATION_TASK_QUEUE,
+  taskQueue = PARLAR_TASK_QUEUE,
   toolDependencies,
   model = anthropic(DEFAULT_AI_MODEL),
   systemPrompt,

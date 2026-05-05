@@ -27,3 +27,6 @@ export type {
   PostgresMemoryPort,
   PostgresMemoryPortOptions,
 } from "./postgresMemoryPort.js";
+
+export { createWorkspaceResolvingMemoryPort } from "./workspaceResolvingMemoryPort.js";
+export type { WorkspaceResolvingMemoryPortOptions } from "./workspaceResolvingMemoryPort.js";

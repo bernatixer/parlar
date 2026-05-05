@@ -23,6 +23,14 @@ import {
   instrumentRegistry,
   type ToolCallLogEntry,
 } from "../tools/instrumentedRegistry.js";
+import {
+  createDefaultEmbedder,
+  createMemoryRepository,
+  createPostgresMemoryPort,
+  createWorkspaceResolvingMemoryPort,
+} from "../integrations/memory/index.js";
+import { prisma } from "../state/db.js";
+import type { WorkspaceMemoryPort } from "../tools/ports.js";
 
 const namespace = getTemporalNamespace();
 const modelName = process.env.PARLAR_AI_MODEL ?? DEFAULT_AI_MODEL;
@@ -91,6 +99,22 @@ async function main() {
     slackMode = "real (SLACK_BOT_TOKEN set)";
   }
 
+  let memoryMode = "in-memory";
+  if (process.env.DATABASE_URL) {
+    const postgresPort = createPostgresMemoryPort({
+      prisma,
+      embedder: createDefaultEmbedder(),
+    });
+    const memory: WorkspaceMemoryPort = createWorkspaceResolvingMemoryPort({
+      inner: postgresPort,
+      repository: createMemoryRepository(prisma),
+    });
+    toolDependencies = { ...toolDependencies, memory };
+    memoryMode = process.env.OPENAI_API_KEY
+      ? "postgres+openai-embed"
+      : "postgres+fake-embed";
+  }
+
   const baseRegistry = createParlarToolRegistry(toolDependencies);
   const { registry } = instrumentRegistry(baseRegistry, (entry) => {
     console.log(formatToolCall(entry));
@@ -136,7 +160,7 @@ async function main() {
   });
 
   console.log(
-    `parlar worker started (temporal=${getTemporalAddress()}, namespace=${namespace}, model=${modelName}, slack=${slackMode}, demo=${demoMode}, decideMaxSteps=${decideMaxSteps ?? "default"})`,
+    `parlar worker started (temporal=${getTemporalAddress()}, namespace=${namespace}, model=${modelName}, slack=${slackMode}, memory=${memoryMode}, demo=${demoMode}, decideMaxSteps=${decideMaxSteps ?? "default"})`,
   );
   await worker.run();
 }

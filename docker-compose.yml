@@ -40,10 +40,13 @@ services:
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       PARLAR_AI_MODEL: ${PARLAR_AI_MODEL:-claude-sonnet-4-6}
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://parlar:parlar@postgres:5432/parlar}
     depends_on:
       - temporal
+      - postgres
     restart: unless-stopped
 
 volumes:

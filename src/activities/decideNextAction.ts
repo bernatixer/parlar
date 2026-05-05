@@ -145,6 +145,10 @@ function inferStepIdx(callOpts: { toolCallId?: string }): string {
 }
 
 function defaultSystemPrompt(_input: DecideNextActionInput): string {
+  return baseSystemPrompt();
+}
+
+function baseSystemPrompt(): string {
   return [
     "You are Parlar, an agent that keeps Slack-style conversations from being dropped.",
     "Your job each turn:",
@@ -160,6 +164,22 @@ function defaultSystemPrompt(_input: DecideNextActionInput): string {
     "- conversation.conversationId IS the Slack channel id (use it as channelId in slack tools).",
     "- threadKey is the Slack thread_ts; use 'root' to mean a top-level channel message (no thread).",
     "- Pass thread keys and message timestamps verbatim as STRINGS, never as numbers (they have trailing zeros and decimals).",
+  ].join("\n");
+}
+
+/**
+ * System prompt for short demo runs: caps reminder horizons so the wow-effect
+ * fits in seconds instead of hours, and pushes the agent toward visible Slack
+ * action when a reminder fires.
+ */
+export function demoSystemPrompt(_input: DecideNextActionInput): string {
+  return [
+    baseSystemPrompt(),
+    "DEMO MODE OVERRIDES (this is a short test run, not production):",
+    "- Reminder fireAt MUST be within the next 60 seconds (use now + 20s by default). Never schedule reminders hours or days out.",
+    "- When a reminder fires for an unanswered ask, ALWAYS post a friendly, brief nudge to the thread via send_slack_message (mention the assignee), then set stop=true on that same turn.",
+    "- When a participant has clearly acknowledged the ask, cancel any related reminders and set stop=true.",
+    "- Be willing to send messages for visible progress: if the user explicitly addresses you (e.g., '@parlar ...'), respond with send_slack_message.",
   ].join("\n");
 }
 

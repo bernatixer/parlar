@@ -7,6 +7,7 @@ import path from "node:path";
 import { DEFAULT_AI_MODEL } from "../../src/ai/models.js";
 import { createLocalToolDependencies } from "../../src/adapters/local/index.js";
 import { SlackWebApiContextPort } from "../../src/adapters/slack/slackWebApi.js";
+import { demoSystemPrompt } from "../../src/activities/decideNextAction.js";
 import type { ToolDependencies } from "../../src/tools/index.js";
 import {
   getTemporalAddress,
@@ -78,30 +79,6 @@ function logSection(title: string): void {
   console.log(`\n=== ${title} ===`);
 }
 
-function harnessSystemPrompt(_input: unknown): string {
-  return [
-    "You are Parlar, an agent that keeps Slack-style conversations from being dropped.",
-    "Your job each turn:",
-    "- Use the read tools to gather only the context you need.",
-    "- Take small, reversible, explainable actions via the action tools.",
-    "- When done, call submit_turn_result EXACTLY once with the workflow-side outcome.",
-    "Rules:",
-    "- Reminders persist in workflow state. Use setReminders for new or replaced reminders, cancelReminderIds to drop ones you no longer want.",
-    "- Set stop=true only when the conversation is resolved or no longer needs management. Otherwise stop=false.",
-    "- Never invent workspace facts or participants; ask via tools.",
-    "- Prefer asking a human via request_human_approval when uncertain.",
-    "Slack identifier mapping:",
-    "- conversation.conversationId IS the Slack channel id (use it as channelId in slack tools).",
-    "- threadKey is the Slack thread_ts; use 'root' to mean a top-level channel message (no thread).",
-    "- Pass thread keys and message timestamps verbatim as STRINGS, never as numbers (they have trailing zeros and decimals).",
-    "DEMO MODE OVERRIDES (this is a short test run, not production):",
-    "- Reminder fireAt MUST be within the next 60 seconds (use now + 25s by default).",
-    "- When a reminder fires for an unanswered ask, ALWAYS post a friendly, brief nudge to the thread via send_slack_message (mention the assignee), then set stop=true on that same turn.",
-    "- When a participant has clearly acknowledged the ask, cancel any related reminders and set stop=true.",
-    "- Be willing to send messages for visible progress: if the user explicitly addresses you (e.g., '@parlar ...'), respond with send_slack_message.",
-  ].join("\n");
-}
-
 function shortJson(value: unknown, max = 280): string {
   let s: string;
   try {
@@ -168,7 +145,7 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
     model: anthropic(MODEL_NAME),
     registry,
     maxSteps: MAX_AGENT_STEPS,
-    systemPrompt: harnessSystemPrompt,
+    systemPrompt: demoSystemPrompt,
   });
 
   const activities = createAgentActivities({

@@ -26,26 +26,31 @@ const MAX_AGENT_STEPS = Number.parseInt(process.env.PARLAR_HARNESS_MAX_STEPS ?? 
 interface ParsedArgs {
   scenarioName: string;
   list: boolean;
-  followAfterStop: boolean;
   timeoutMs: number;
+  maxTurns: number;
 }
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
   const args: ParsedArgs = {
     scenarioName: "review-request",
     list: false,
-    followAfterStop: false,
     timeoutMs: 120_000,
+    maxTurns: Number.parseInt(process.env.PARLAR_HARNESS_MAX_TURNS ?? "3", 10),
   };
   const positional: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--list" || arg === "-l") args.list = true;
-    else if (arg === "--follow-after-stop") args.followAfterStop = true;
     else if (arg === "--timeout") {
       const next = argv[i + 1];
       if (next) {
         args.timeoutMs = Number.parseInt(next, 10);
+        i++;
+      }
+    } else if (arg === "--max-turns") {
+      const next = argv[i + 1];
+      if (next) {
+        args.maxTurns = Number.parseInt(next, 10);
         i++;
       }
     } else if (arg && !arg.startsWith("-")) {
@@ -88,7 +93,9 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
   logSection(`Scenario: ${scenario.name}`);
   console.log(scenario.description);
   console.log(`Workflow ID: ${agentConversationWorkflowId(scenario.conversation)}`);
-  console.log(`Model: ${MODEL_NAME}    Debounce: ${DEBOUNCE_MS}ms    Max steps: ${MAX_AGENT_STEPS}`);
+  console.log(
+    `Model: ${MODEL_NAME}    Debounce: ${DEBOUNCE_MS}ms    Max steps: ${MAX_AGENT_STEPS}    Max turns: ${args.maxTurns}`,
+  );
 
   const taskQueue = `${PARLAR_AGENT_CONVERSATION_TASK_QUEUE}-harness-${process.pid}-${Date.now()}`;
 
@@ -106,6 +113,12 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
     console.log(describeToolCall(entry));
   });
 
+  const decideNext = createDecideNextAction({
+    model: anthropic(MODEL_NAME),
+    registry,
+    maxSteps: MAX_AGENT_STEPS,
+  });
+
   const activities = createAgentActivities({
     decideNextAction: async (input) => {
       turnIdx += 1;
@@ -119,11 +132,19 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
           .join(", ") || "(none)"}`,
       );
       console.log(`  pending reminders: ${input.pendingReminders.length}`);
-      const decideNext = createDecideNextAction({
-        model: anthropic(MODEL_NAME),
-        registry,
-        maxSteps: MAX_AGENT_STEPS,
-      });
+
+      if (turnIdx >= args.maxTurns) {
+        console.log(
+          `  ! reached --max-turns (${args.maxTurns}); forcing stop=true to cap model spend`,
+        );
+        return {
+          stop: true,
+          setReminders: [],
+          cancelReminderIds: [],
+          summary: "harness max-turns cap",
+        };
+      }
+
       const result = await decideNext(input);
       console.log(
         `  -> stop=${result.stop} setReminders=${result.setReminders.length} cancel=${result.cancelReminderIds.length}` +
@@ -149,10 +170,12 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
   const conversationClient = createAgentConversationClient({ client, taskQueue });
 
   const cleanup = async () => {
+    const workflowId = agentConversationWorkflowId(scenario.conversation);
     try {
-      await conversationClient.closeConversation({ conversation: scenario.conversation });
+      await client.workflow.getHandle(workflowId).terminate("harness exit");
+      console.log(`(terminated ${workflowId} on exit so it cannot resume later)`);
     } catch {
-      /* ignore */
+      /* workflow may already be closed/completed */
     }
     worker.shutdown();
     await workerRun.catch(() => undefined);

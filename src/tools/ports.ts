@@ -1,14 +1,11 @@
 import type {
   ActionItem,
-  AiWorkTask,
   AllowedAction,
   ConversationRef,
   ConversationStatus,
   ConversationSummary,
   FollowUpPlan,
-  IsoDateTime,
   JsonValue,
-  ScheduledAiWork,
   SlackMessageBlock,
   SlackMessage,
   SlackUserId,
@@ -176,57 +173,9 @@ export interface SafetyReviewPort {
   }): Promise<{ auditId: string }>;
 }
 
-export interface TemporalControlPort {
-  queryConversationWorkflow(input: {
-    conversation: ConversationRef;
-  }): Promise<unknown>;
-  signalConversationEvent(input: {
-    conversation: ConversationRef;
-    event: JsonValue;
-  }): Promise<{ workflowId: string; signaled: true }>;
-  startOrSignalConversation(input: {
-    conversation: ConversationRef;
-    event: JsonValue;
-    taskQueue: string;
-  }): Promise<{ workflowId: string; signalWithStartRequested: true }>;
-  closeConversationWorkflow(input: {
-    conversation: ConversationRef;
-    reason: string;
-  }): Promise<{ workflowId: string; closed: true }>;
-  scheduleFollowUp(input: {
-    conversation: ConversationRef;
-    followUp: FollowUpPlan;
-    idempotencyKey: string;
-  }): Promise<{ followUpId: string; status: "scheduled" | "updated" | "deduplicated" }>;
-  cancelFollowUp(input: {
-    conversation: ConversationRef;
-    followUpId: string;
-    reason: string;
-    idempotencyKey: string;
-  }): Promise<{ followUpId: string; status: "cancelled" | "deduplicated" }>;
-  snoozeFollowUp(input: {
-    conversation: ConversationRef;
-    followUpId: string;
-    runAt: IsoDateTime;
-    reason: string;
-    idempotencyKey: string;
-  }): Promise<{ followUpId: string; runAt: IsoDateTime; status: "snoozed" | "deduplicated" }>;
-  scheduleAiWork(input: {
-    conversation: ConversationRef;
-    runAt: IsoDateTime;
-    task: AiWorkTask;
-    reason: string;
-    context?: JsonValue;
-    allowedActions?: AllowedAction[];
-    requireHumanApproval?: boolean;
-    idempotencyKey: string;
-  }): Promise<ScheduledAiWork & { status: "scheduled" | "updated" | "deduplicated" }>;
-}
-
 export interface ToolDependencies {
   slack?: SlackContextPort;
   intelligence?: ConversationIntelligencePort;
   memory?: WorkspaceMemoryPort;
   safety?: SafetyReviewPort;
-  temporal?: TemporalControlPort;
 }

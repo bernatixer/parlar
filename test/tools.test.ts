@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ConversationRef, SlackMessage } from "../src/domain/types.js";
-import { conversationWorkflowId } from "../src/temporal/conversationIds.js";
+import { agentConversationWorkflowId } from "../src/temporal/agentConversationIds.js";
 import { createParlarToolRegistry, type ToolDependencies } from "../src/tools/index.js";
 
 const conversation: ConversationRef = {
@@ -121,52 +121,18 @@ function createDependencies(): ToolDependencies {
         return { auditId: "audit-1" };
       },
     },
-    temporal: {
-      async queryConversationWorkflow() {
-        return { status: "ok" };
-      },
-      async signalConversationEvent() {
-        return { workflowId: "workflow-1", signaled: true };
-      },
-      async startOrSignalConversation() {
-        return { workflowId: "workflow-1", signalWithStartRequested: true };
-      },
-      async closeConversationWorkflow() {
-        return { workflowId: "workflow-1", closed: true };
-      },
-      async scheduleFollowUp({ followUp, idempotencyKey }) {
-        return {
-          followUpId: followUp.id || idempotencyKey,
-          status: "scheduled",
-        };
-      },
-      async cancelFollowUp({ followUpId }) {
-        return { followUpId, status: "cancelled" };
-      },
-      async snoozeFollowUp({ followUpId, runAt }) {
-        return { followUpId, runAt, status: "snoozed" };
-      },
-      async scheduleAiWork({ runAt, task, reason, idempotencyKey }) {
-        return {
-          scheduledWorkId: idempotencyKey,
-          workflowId: "workflow-1",
-          runAt,
-          task,
-          reason,
-          status: "scheduled",
-        };
-      },
-    },
   };
 }
 
 describe("Parlar tools", () => {
-  it("registers the full initial tool set with Temporal-safe metadata", () => {
+  it("registers the read/draft/send tool set with Temporal-safe metadata", () => {
     const registry = createParlarToolRegistry(createDependencies());
     const specs = registry.list();
 
-    assert.equal(specs.length, 30);
-    assert.ok(specs.some((spec) => spec.name === "schedule_ai_work"));
+    assert.equal(specs.length, 22);
+    assert.ok(specs.some((spec) => spec.name === "send_slack_message"));
+    assert.ok(!specs.some((spec) => spec.name === "schedule_ai_work"));
+    assert.ok(!specs.some((spec) => spec.name === "schedule_follow_up"));
     assert.ok(specs.every((spec) => spec.temporal.activityBacked));
     assert.ok(specs.every((spec) => spec.temporal.workflowSafe === false));
   });
@@ -176,9 +142,9 @@ describe("Parlar tools", () => {
     const output = await registry.execute(
       "get_conversation_participants",
       {
-        workspaceId: "T123",
-        channelId: "C123",
-        threadTs: "1700000000.000100",
+        workspaceId: conversation.workspaceId,
+        channelId: conversation.channelId,
+        threadTs: conversation.threadTs,
       },
       { requestId: "req-1", actor: "test" },
     );
@@ -207,36 +173,18 @@ describe("Parlar tools", () => {
       deduplicated: false,
     });
   });
-
-  it("routes schedule_ai_work through the Temporal port", async () => {
-    const registry = createParlarToolRegistry(createDependencies());
-    const output = await registry.execute(
-      "schedule_ai_work",
-      {
-        conversation,
-        runAt: "2026-05-06T18:00:00.000Z",
-        task: "check_for_reply",
-        reason: "Recheck whether the reviewer responded.",
-      },
-      { requestId: "req-3", actor: "test", idempotencyKey: "ai-work-1" },
-    );
-
-    assert.deepEqual(output, {
-      scheduledWorkId: "ai-work-1",
-      workflowId: "workflow-1",
-      runAt: "2026-05-06T18:00:00.000Z",
-      task: "check_for_reply",
-      reason: "Recheck whether the reviewer responded.",
-      status: "scheduled",
-    });
-  });
 });
 
-describe("Temporal conversation IDs", () => {
-  it("uses stable workspace and conversation identifiers", () => {
+describe("Agent conversation IDs", () => {
+  it("uses platform-aware workspace and conversation identifiers", () => {
     assert.equal(
-      conversationWorkflowId(conversation),
-      "parlar:T123:C123:1700000000.000100",
+      agentConversationWorkflowId({
+        workspaceId: "T123",
+        platform: "slack",
+        conversationId: "C123:1700000000.000100",
+        conversationKind: "channel",
+      }),
+      "parlar:T123:slack:C123:1700000000.000100",
     );
   });
 });

@@ -5,7 +5,6 @@ import { ToolRegistry } from "./registry.js";
 import { createSafetyReviewTools } from "./safetyReview.js";
 import { createSlackContextTools } from "./slackContext.js";
 import type { Tool } from "./tool.js";
-import { createTemporalControlTools } from "./temporalControl.js";
 import { createWorkspaceMemoryTools } from "./workspaceMemory.js";
 
 export type { ToolDependencies } from "./ports.js";
@@ -20,7 +19,6 @@ export function createParlarTools(dependencies: ToolDependencies): Tool<unknown,
     ...createFollowUpActionTools(dependencies),
     ...createWorkspaceMemoryTools(dependencies),
     ...createSafetyReviewTools(dependencies),
-    ...createTemporalControlTools(dependencies),
   ] as Tool<unknown, unknown>[];
 }
 

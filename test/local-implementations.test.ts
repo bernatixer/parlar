@@ -196,44 +196,6 @@ describe("local tool implementations", () => {
     ) as { deduplicated: boolean };
     assert.equal(sent.deduplicated, false);
 
-    const scheduledFollowUp = await registry.execute(
-      "schedule_follow_up",
-      {
-        conversation,
-        followUp: {
-          id: "follow-up-1",
-          targetUserIds: ["U456"],
-          sendAt: "2026-05-06T18:00:00.000Z",
-          reason: "Review request is still pending.",
-        },
-      },
-      { ...context, idempotencyKey: "follow-up-1-key" },
-    ) as { status: string };
-    assert.equal(scheduledFollowUp.status, "scheduled");
-
-    assert.equal(
-      (await registry.execute(
-        "snooze_follow_up",
-        {
-          conversation,
-          followUpId: "follow-up-1",
-          runAt: "2026-05-07T18:00:00.000Z",
-          reason: "Wait another day.",
-        },
-        { ...context, idempotencyKey: "snooze-1" },
-      ) as { status: string }).status,
-      "snoozed",
-    );
-
-    assert.equal(
-      (await registry.execute(
-        "cancel_follow_up",
-        { conversation, followUpId: "follow-up-1", reason: "Resolved." },
-        { ...context, idempotencyKey: "cancel-1" },
-      ) as { status: string }).status,
-      "cancelled",
-    );
-
     assert.deepEqual(
       await registry.execute("get_workspace_preferences", { workspaceId: "T123" }, context),
       { tone: "concise", quietHours: { enabled: true }, followUpDelayHours: 24 },
@@ -306,53 +268,5 @@ describe("local tool implementations", () => {
       "audit-1",
     );
 
-    assert.equal(
-      (await registry.execute(
-        "start_or_signal_conversation",
-        { conversation, event: { type: "message" }, taskQueue: "test" },
-        context,
-      ) as { signalWithStartRequested: boolean }).signalWithStartRequested,
-      true,
-    );
-
-    assert.equal(
-      (await registry.execute(
-        "signal_conversation_event",
-        { conversation, event: { type: "reply" } },
-        context,
-      ) as { signaled: boolean }).signaled,
-      true,
-    );
-
-    assert.equal(
-      (await registry.execute(
-        "schedule_ai_work",
-        {
-          conversation,
-          runAt: "2026-05-08T18:00:00.000Z",
-          task: "check_for_reply",
-          reason: "Check whether Bob replied.",
-          allowedActions: ["draft_message", "no_op"],
-        },
-        { ...context, idempotencyKey: "ai-work-local-1" },
-      ) as { status: string }).status,
-      "scheduled",
-    );
-
-    assert.equal(
-      (await registry.execute("query_conversation_workflow", { conversation }, context) as {
-        workflowId: string;
-      }).workflowId,
-      "parlar:T123:C123:1700000000.000100",
-    );
-
-    assert.equal(
-      (await registry.execute(
-        "close_conversation_workflow",
-        { conversation, reason: "Done." },
-        context,
-      ) as { closed: boolean }).closed,
-      true,
-    );
   });
 });

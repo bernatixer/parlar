@@ -8,7 +8,6 @@ import {
   type InMemorySlackOptions,
   type InMemorySlackUser,
 } from "./inMemorySlack.js";
-import { InMemoryTemporalControlPort } from "./inMemoryTemporalControl.js";
 import {
   InMemoryWorkspaceMemoryPort,
   type InMemoryWorkspaceMemoryOptions,
@@ -25,7 +24,6 @@ export interface LocalToolDependencies extends ToolDependencies {
   intelligence: HeuristicConversationIntelligencePort;
   memory: InMemoryWorkspaceMemoryPort;
   safety: DefaultSafetyReviewPort;
-  temporal: InMemoryTemporalControlPort;
 }
 
 export function createLocalToolDependencies(
@@ -36,7 +34,6 @@ export function createLocalToolDependencies(
     intelligence: new HeuristicConversationIntelligencePort(),
     memory: new InMemoryWorkspaceMemoryPort(options.memory),
     safety: new DefaultSafetyReviewPort(options.safety),
-    temporal: new InMemoryTemporalControlPort(),
   };
 }
 

@@ -9,6 +9,7 @@ import type {
   IsoDateTime,
   JsonValue,
   ScheduledAiWork,
+  SlackMessageBlock,
   SlackMessage,
   SlackUserId,
 } from "../domain/types.js";
@@ -53,6 +54,7 @@ export interface SlackContextPort {
     workspaceId: string;
     channelId: string;
     text: string;
+    blocks?: SlackMessageBlock[];
     threadTs?: string;
     targetUserIds?: SlackUserId[];
     idempotencyKey: string;

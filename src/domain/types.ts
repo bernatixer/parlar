@@ -60,6 +60,11 @@ export interface FollowUpPlan {
   messageDraft?: string;
 }
 
+export interface SlackMessageBlock {
+  type: string;
+  [key: string]: JsonValue;
+}
+
 export type AllowedAction =
   | "send_message"
   | "draft_message"

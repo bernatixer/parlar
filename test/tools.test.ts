@@ -165,7 +165,7 @@ describe("Parlar tools", () => {
     const registry = createParlarToolRegistry(createDependencies());
     const specs = registry.list();
 
-    assert.equal(specs.length, 29);
+    assert.equal(specs.length, 30);
     assert.ok(specs.some((spec) => spec.name === "schedule_ai_work"));
     assert.ok(specs.every((spec) => spec.temporal.activityBacked));
     assert.ok(specs.every((spec) => spec.temporal.workflowSafe === false));

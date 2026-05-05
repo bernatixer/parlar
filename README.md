@@ -112,6 +112,23 @@ The first implementation includes a modular tool registry with activity-backed t
 
 All tools are designed to run through Activities or service boundaries. Workflow code should call Activities, not tool implementations directly.
 
+The repo now includes concrete local implementations for every tool port:
+
+- `createLocalToolDependencies(...)` wires in-memory Slack, memory, safety, Temporal-control, and heuristic conversation intelligence adapters.
+- `InMemorySlackContextPort` supports seeded Slack-like messages, users, channels, search, thread reads, idempotent sends, and permalink generation.
+- `HeuristicConversationIntelligencePort` provides deterministic local classification, action extraction, summarization, follow-up decisions, resolution detection, and drafting.
+- `InMemoryWorkspaceMemoryPort`, `DefaultSafetyReviewPort`, and `InMemoryTemporalControlPort` make the memory, safety, and workflow-control tools executable in local tests.
+
+## Slack SDK Integration
+
+Slack message sending is implemented behind the `SlackContextPort` boundary.
+
+- `build_slack_follow_up_message` builds a polished Slack Block Kit payload with fallback text.
+- `SlackWebApiContextPort` uses `@slack/web-api` for real Slack reads and sends.
+- `send_slack_message` accepts both `text` and optional `blocks`, adds Slack metadata with the idempotency key, and deduplicates repeated sends within the adapter process.
+
+Local development can use the in-memory adapter. Real Slack usage needs `SLACK_BOT_TOKEN` in the environment and should eventually back idempotency with durable storage rather than process memory.
+
 ## AI SDK Integration
 
 Parlar installs Vercel's AI SDK and Temporal's AI SDK plugin:

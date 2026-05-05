@@ -6,7 +6,6 @@ import {
   defineUpdate,
   proxyActivities,
   setHandler,
-  sleep,
   workflowInfo,
 } from "@temporalio/workflow";
 import type {
@@ -203,12 +202,13 @@ export async function agentConversationWorkflow(
     const waitMs = rawWaitMs <= 0 ? 0 : Math.max(rawWaitMs, 1_000);
 
     if (waitMs > 0) {
-      await Promise.race([
-        condition(
-          () => state.stopRequested || hasImmediateWork(state) || state.wakeRequested,
-        ),
-        sleep(waitMs),
-      ]);
+      // condition(predicate, timeoutMs) cancels its internal timer the moment
+      // the predicate fires, so a signal arriving during a long wait does not
+      // leave a stale 24h timer dangling in workflow history.
+      await condition(
+        () => state.stopRequested || hasImmediateWork(state) || state.wakeRequested,
+        waitMs,
+      );
     }
 
     if (state.stopRequested) break;

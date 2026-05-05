@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "smoke:ai-env": "tsx scripts/smoke-ai-env.ts",
+    "smoke:slack-send": "tsx scripts/smoke-slack-send.ts",
     "harness": "tsx scripts/harness/index.ts",
     "harness:list": "tsx scripts/harness/index.ts --list",
     "test": "tsx --test test/**/*.test.ts",

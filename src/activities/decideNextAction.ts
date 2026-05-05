@@ -59,7 +59,7 @@ export function createDecideNextAction(
   deps: DecideNextActionDependencies,
 ): AgentActivities["decideNextAction"] {
   const buildSystem = deps.systemPrompt ?? defaultSystemPrompt;
-  const maxSteps = deps.maxSteps ?? 8;
+  const maxSteps = deps.maxSteps ?? 5;
 
   return async function decideNextAction(
     input: DecideNextActionInput,
@@ -160,6 +160,12 @@ function baseSystemPrompt(): string {
     "- Set stop=true only when the conversation is resolved or no longer needs management. Otherwise stop=false.",
     "- Never invent workspace facts or participants; ask via tools.",
     "- Prefer asking a human via request_human_approval when uncertain.",
+    "Memory usage (do this aggressively):",
+    "- BEFORE deciding tone, urgency, ownership, escalation, or follow-up timing, call get_workspace_preferences and get_person_context for the relevant participants. These tools tell you quiet hours, reminder norms, timezones, and per-person preferences — do not guess them.",
+    "- BEFORE acting on a new signal, call get_related_conversation_memory with a short query summarizing the current ask. Prior decisions and summaries usually contain the answer or change what the right action is.",
+    "- AFTER taking any non-trivial action (sending a message, scheduling/canceling a reminder, escalating, or deciding to do nothing for a substantive reason), call record_conversation_decision with the reason. This is how future turns avoid repeating work or contradicting earlier choices.",
+    "- WHEN the thread has materially advanced (resolution, new commitment, ownership change, blocked-on shift), call record_conversation_summary so the next turn starts from a compact, up-to-date snapshot.",
+    "- Treat memory tools as cheap and the default first move. The cost of reading stale or missing context is a wrong action; the cost of one extra read is one round trip.",
     "Slack identifier mapping:",
     "- conversation.conversationId IS the Slack channel id (use it as channelId in slack tools).",
     "- threadKey is the Slack thread_ts; use 'root' to mean a top-level channel message (no thread).",

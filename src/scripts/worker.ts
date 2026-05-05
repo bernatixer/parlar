@@ -28,6 +28,19 @@ const namespace = getTemporalNamespace();
 const modelName = process.env.PARLAR_AI_MODEL ?? DEFAULT_AI_MODEL;
 const demoMode = /^(1|true|yes)$/i.test(process.env.PARLAR_DEMO_MODE ?? "");
 
+function parseMaxSteps(raw: string | undefined): number | undefined {
+  if (raw === undefined || raw === "") return undefined;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error(
+      `PARLAR_DECIDE_MAX_STEPS must be a positive integer, got "${raw}".`,
+    );
+  }
+  return n;
+}
+
+const decideMaxSteps = parseMaxSteps(process.env.PARLAR_DECIDE_MAX_STEPS);
+
 function shortJson(value: unknown, max = 280): string {
   let s: string;
   try {
@@ -87,6 +100,7 @@ async function main() {
     model: anthropic(modelName),
     registry,
     ...(demoMode ? { systemPrompt: demoSystemPrompt } : {}),
+    ...(decideMaxSteps === undefined ? {} : { maxSteps: decideMaxSteps }),
   });
 
   const activities = createAgentActivities({
@@ -122,7 +136,7 @@ async function main() {
   });
 
   console.log(
-    `parlar worker started (temporal=${getTemporalAddress()}, namespace=${namespace}, model=${modelName}, slack=${slackMode}, demo=${demoMode})`,
+    `parlar worker started (temporal=${getTemporalAddress()}, namespace=${namespace}, model=${modelName}, slack=${slackMode}, demo=${demoMode}, decideMaxSteps=${decideMaxSteps ?? "default"})`,
   );
   await worker.run();
 }

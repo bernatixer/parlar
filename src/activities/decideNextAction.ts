@@ -123,7 +123,7 @@ function buildToolSet(options: BuildToolSetOptions): ToolSet {
   for (const spec of options.registry.list()) {
     tools[spec.name] = dynamicTool({
       description: `${spec.description} Input shape: ${spec.inputSchema}. Output shape: ${spec.outputSchema}.`,
-      inputSchema: z.unknown(),
+      inputSchema: z.record(z.string(), z.unknown()),
       execute: async (input, callOpts) => {
         const stepIdx = inferStepIdx(callOpts);
         const context: ToolExecutionContext = {

@@ -14,6 +14,8 @@
     "build": "tsc -p tsconfig.json",
     "smoke:ai-env": "tsx scripts/smoke-ai-env.ts",
     "smoke:slack-send": "tsx scripts/smoke-slack-send.ts",
+    "check:temporal": "tsx scripts/check-temporal.ts",
+    "check:slack-scopes": "tsx scripts/check-slack-scopes.ts",
     "harness": "tsx scripts/harness/index.ts",
     "harness:list": "tsx scripts/harness/index.ts --list",
     "test": "tsx --test test/**/*.test.ts",

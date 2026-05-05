@@ -8,6 +8,11 @@ import { DEFAULT_AI_MODEL } from "../../src/ai/models.js";
 import { createLocalToolDependencies } from "../../src/adapters/local/index.js";
 import { SlackWebApiContextPort } from "../../src/adapters/slack/slackWebApi.js";
 import type { ToolDependencies } from "../../src/tools/index.js";
+import {
+  getTemporalAddress,
+  getTemporalConnectOptions,
+  getTemporalNamespace,
+} from "../../src/temporal/connect.js";
 import { createAgentActivities } from "../../src/activities/agentActivities.js";
 import { createDecideNextAction } from "../../src/activities/decideNextAction.js";
 import { createParlarToolRegistry } from "../../src/tools/index.js";
@@ -19,8 +24,8 @@ import { createAgentConversationClient } from "../../src/temporal/agentConversat
 import { SCENARIOS, listScenarios, type HarnessScenario } from "./scenarios.js";
 import { instrumentRegistry, type ToolCallLogEntry } from "./instrumentedRegistry.js";
 
-const ADDRESS = process.env.TEMPORAL_ADDRESS ?? "localhost:7233";
-const NAMESPACE = process.env.TEMPORAL_NAMESPACE ?? "default";
+const ADDRESS = getTemporalAddress();
+const NAMESPACE = getTemporalNamespace();
 // Harness defaults to Haiku for fast iteration; override with PARLAR_HARNESS_MODEL
 // or fall back to PARLAR_AI_MODEL.
 const MODEL_NAME =
@@ -201,9 +206,10 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
     },
   });
 
-  const clientConnection = await Connection.connect({ address: ADDRESS });
+  const connectOpts = getTemporalConnectOptions();
+  const clientConnection = await Connection.connect(connectOpts);
   const client = new Client({ connection: clientConnection, namespace: NAMESPACE });
-  const workerConnection = await NativeConnection.connect({ address: ADDRESS });
+  const workerConnection = await NativeConnection.connect(connectOpts);
 
   const worker = await Worker.create({
     connection: workerConnection,

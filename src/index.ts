@@ -10,4 +10,5 @@ export * from "./activities/decideNextAction.js";
 export * from "./temporal/agentConversationIds.js";
 export * from "./temporal/agentConversationClient.js";
 export * from "./temporal/agentWorker.js";
+export * from "./temporal/connect.js";
 export * from "./workflows/agentConversationWorkflow.js";

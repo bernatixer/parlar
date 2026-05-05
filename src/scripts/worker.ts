@@ -4,9 +4,13 @@ import { NativeConnection } from "@temporalio/worker";
 import { DEFAULT_AI_MODEL } from "../ai/models.js";
 import { createLocalToolDependencies } from "../adapters/local/index.js";
 import { createAgentWorker } from "../temporal/agentWorker.js";
+import {
+  getTemporalAddress,
+  getTemporalConnectOptions,
+  getTemporalNamespace,
+} from "../temporal/connect.js";
 
-const address = process.env.TEMPORAL_ADDRESS ?? "127.0.0.1:7233";
-const namespace = process.env.TEMPORAL_NAMESPACE ?? "default";
+const namespace = getTemporalNamespace();
 const modelName = process.env.PARLAR_AI_MODEL ?? DEFAULT_AI_MODEL;
 
 async function main() {
@@ -16,7 +20,8 @@ async function main() {
     );
   }
 
-  const connection = await NativeConnection.connect({ address });
+  const connectOpts = getTemporalConnectOptions();
+  const connection = await NativeConnection.connect(connectOpts);
   const toolDependencies = createLocalToolDependencies();
 
   const worker = await createAgentWorker({
@@ -27,7 +32,7 @@ async function main() {
   });
 
   console.log(
-    `parlar worker started (temporal=${address}, namespace=${namespace}, model=${modelName})`,
+    `parlar worker started (temporal=${getTemporalAddress()}, namespace=${namespace}, model=${modelName})`,
   );
   await worker.run();
 }

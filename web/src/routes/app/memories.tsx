@@ -102,7 +102,7 @@ function MemoriesPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium text-ink-50">
                     <Hash className="h-3.5 w-3.5 text-ink-400" />
-                    {m.channel ?? m.workspaceName ?? m.workspaceId.slice(0, 8)}
+                    {m.channel ?? "Workspace memory"}
                     {m.thread && (
                       <>
                         <span className="text-ink-400">·</span>
@@ -176,7 +176,7 @@ function MemoryDetail({
       <h2 className="mt-4 text-2xl font-semibold tracking-tight">
         {memory.channel || memory.thread
           ? `#${memory.channel ?? "—"} · ${memory.thread ?? ""}`
-          : (memory.workspaceName ?? memory.workspaceId.slice(0, 8))}
+          : "Workspace memory"}
       </h2>
       <p className="mt-3 text-ink-100">{memory.content}</p>
 

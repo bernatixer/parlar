@@ -19,17 +19,25 @@ export function createWorkspaceResolvingMemoryPort(
   options: WorkspaceResolvingMemoryPortOptions,
 ): WorkspaceMemoryPort {
   const { inner, repository } = options;
-  const cache = new Map<string, string>();
+  // Cache the in-flight Promise so concurrent calls for the same Slack team id
+  // share one upsert. Without this, parallel tool calls each see a cache miss,
+  // both fire upsert, and the second insert trips the slack_team_id unique
+  // constraint.
+  const cache = new Map<string, Promise<string>>();
 
-  async function resolveWorkspaceId(raw: string): Promise<string> {
-    if (UUID_RE.test(raw)) return raw;
+  function resolveWorkspaceId(raw: string): Promise<string> {
+    if (UUID_RE.test(raw)) return Promise.resolve(raw);
     const cached = cache.get(raw);
     if (cached !== undefined) return cached;
-    const row = await repository.upsertWorkspaceBySlackTeamId({
-      slackTeamId: raw,
-    });
-    cache.set(raw, row.id);
-    return row.id;
+    const pending = repository
+      .upsertWorkspaceBySlackTeamId({ slackTeamId: raw })
+      .then((row) => row.id)
+      .catch((err) => {
+        cache.delete(raw);
+        throw err;
+      });
+    cache.set(raw, pending);
+    return pending;
   }
 
   return {

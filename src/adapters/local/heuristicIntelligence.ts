@@ -154,10 +154,13 @@ export class HeuristicConversationIntelligencePort implements ConversationIntell
   }> {
     const text = input.newEvent.text.toLowerCase();
     const resolved = includesAny(text, RESOLVED_WORDS);
+    const pendingTargets = Array.isArray(input.pendingFollowUp?.targetUserIds)
+      ? input.pendingFollowUp!.targetUserIds
+      : [];
     const superseded =
       resolved ||
       includesAny(text, ["never mind", "ignore", "cancel", "moved this", "handled offline"]) ||
-      Boolean(input.pendingFollowUp && input.pendingFollowUp.targetUserIds.includes(input.newEvent.senderUserId));
+      pendingTargets.includes(input.newEvent.senderUserId);
 
     return {
       resolved,

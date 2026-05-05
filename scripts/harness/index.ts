@@ -23,7 +23,10 @@ import {
 } from "../../src/temporal/agentConversationIds.js";
 import { createAgentConversationClient } from "../../src/temporal/agentConversationClient.js";
 import { SCENARIOS, listScenarios, type HarnessScenario } from "./scenarios.js";
-import { instrumentRegistry, type ToolCallLogEntry } from "./instrumentedRegistry.js";
+import {
+  instrumentRegistry,
+  type ToolCallLogEntry,
+} from "../../src/tools/instrumentedRegistry.js";
 
 const ADDRESS = getTemporalAddress();
 const NAMESPACE = getTemporalNamespace();

@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import type { ProviderV3 } from "@ai-sdk/provider";
 import { AiSdkPlugin } from "@temporalio/ai-sdk";
 import { Worker, type WorkerOptions } from "@temporalio/worker";
@@ -27,7 +27,7 @@ export async function createParlarWorker({
   toolDependencies,
   scheduledAiWorkRunner,
   workflowsPath = defaultWorkflowsPath(),
-  aiModelProvider = openai,
+  aiModelProvider = anthropic,
 }: CreateParlarWorkerOptions): Promise<Worker> {
   return Worker.create({
     ...(connection === undefined ? {} : { connection }),

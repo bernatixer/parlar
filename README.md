@@ -118,11 +118,15 @@ Parlar installs Vercel's AI SDK and Temporal's AI SDK plugin:
 
 ```txt
 ai
-@ai-sdk/openai
+@ai-sdk/anthropic
 @temporalio/ai-sdk
 ```
 
-The worker factory registers `AiSdkPlugin` with the OpenAI provider by default. Runtime model calls require the worker process to have the relevant provider credentials, such as `OPENAI_API_KEY`.
+The worker factory registers `AiSdkPlugin` with the Anthropic provider by default. Runtime model calls require the worker process to have `ANTHROPIC_API_KEY` available in the environment. Use `.env.example` as the local template. The default model is Claude Sonnet 4.6:
+
+```txt
+PARLAR_AI_MODEL=claude-sonnet-4-6
+```
 
 Workflow code can use:
 
@@ -131,7 +135,7 @@ import { temporalProvider } from "@temporalio/ai-sdk";
 import { generateText } from "ai";
 
 const result = await generateText({
-  model: temporalProvider.languageModel("gpt-4o-mini"),
+  model: temporalProvider.languageModel("claude-sonnet-4-6"),
   prompt: "Summarize this conversation.",
 });
 ```

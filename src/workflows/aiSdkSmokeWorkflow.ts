@@ -1,5 +1,6 @@
 import { temporalProvider } from "@temporalio/ai-sdk";
 import { generateText } from "ai";
+import { DEFAULT_AI_MODEL } from "../ai/models.js";
 
 export interface AiSdkSmokeWorkflowInput {
   model?: string;
@@ -7,7 +8,7 @@ export interface AiSdkSmokeWorkflowInput {
 }
 
 export async function aiSdkSmokeWorkflow({
-  model = "gpt-4o-mini",
+  model = DEFAULT_AI_MODEL,
   prompt,
 }: AiSdkSmokeWorkflowInput): Promise<string> {
   const result = await generateText({

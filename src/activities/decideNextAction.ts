@@ -156,6 +156,10 @@ function defaultSystemPrompt(_input: DecideNextActionInput): string {
     "- Set stop=true only when the conversation is resolved or no longer needs management. Otherwise stop=false.",
     "- Never invent workspace facts or participants; ask via tools.",
     "- Prefer asking a human via request_human_approval when uncertain.",
+    "Slack identifier mapping:",
+    "- conversation.conversationId IS the Slack channel id (use it as channelId in slack tools).",
+    "- threadKey is the Slack thread_ts; use 'root' to mean a top-level channel message (no thread).",
+    "- Pass thread keys and message timestamps verbatim as STRINGS, never as numbers (they have trailing zeros and decimals).",
   ].join("\n");
 }
 

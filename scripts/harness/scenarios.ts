@@ -20,6 +20,8 @@ export interface HarnessScenario {
   signals: readonly MessageSignal[];
   followUpSignals?: ReadonlyArray<{ delayMs: number; signal: MessageSignal }>;
   expectStopWithinMs?: number;
+  /** When true, the harness wires the real Slack Web API for slack reads/sends. */
+  useRealSlack?: boolean;
 }
 
 const WORKSPACE_ID = "T_HARNESS";
@@ -179,6 +181,52 @@ export const SCENARIOS: Record<string, HarnessScenario> = {
       }),
     ],
     expectStopWithinMs: 60_000,
+  },
+
+  "live-ping": {
+    name: "live-ping",
+    description:
+      "Live #random demo: a real human pings @parlar. Real Slack sends; in-memory everything else. " +
+      "The bot must already be in the channel and have chat:write.",
+    conversation: {
+      workspaceId: "T_LIVE",
+      platform: "slack",
+      // conversationId IS the Slack channel id for channel conversations.
+      conversationId: "C0B1X5XUA92",
+      conversationKind: "channel",
+    },
+    channels: [
+      {
+        workspaceId: "T_LIVE",
+        channelId: "C0B1X5XUA92",
+        name: "random",
+      },
+    ],
+    users: [
+      {
+        workspaceId: "T_LIVE",
+        userId: "U0B1CNUTFF1",
+        displayName: "Bernat",
+      },
+    ],
+    seedMessages: [],
+    signals: [
+      {
+        platform: "slack",
+        kind: "mention",
+        signalId: "live-ping-1",
+        threadKey: "root",
+        at: new Date().toISOString(),
+        authorId: "participant:U0B1CNUTFF1",
+        authorPlatformUserId: "U0B1CNUTFF1",
+        authorDisplayName: "Bernat",
+        isFromAgent: false,
+        text: "Hey @parlar, can you reply here so I can confirm the agent loop reaches Slack? Keep the message under 20 words and tag me back.",
+        mentionedParticipantIds: ["participant:PARLAR"],
+      },
+    ],
+    expectStopWithinMs: 60_000,
+    useRealSlack: true,
   },
 
   "silent-channel-noise": {

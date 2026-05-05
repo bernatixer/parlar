@@ -6,6 +6,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import path from "node:path";
 import { DEFAULT_AI_MODEL } from "../../src/ai/models.js";
 import { createLocalToolDependencies } from "../../src/adapters/local/index.js";
+import { SlackWebApiContextPort } from "../../src/adapters/slack/slackWebApi.js";
+import type { ToolDependencies } from "../../src/tools/index.js";
 import { createAgentActivities } from "../../src/activities/agentActivities.js";
 import { createDecideNextAction } from "../../src/activities/decideNextAction.js";
 import { createParlarToolRegistry } from "../../src/tools/index.js";
@@ -99,7 +101,7 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
 
   const taskQueue = `${PARLAR_TASK_QUEUE}-harness-${process.pid}-${Date.now()}`;
 
-  const deps = createLocalToolDependencies({
+  const localDeps = createLocalToolDependencies({
     slack: {
       permalinkBaseUrl: "https://slack.example.test",
       channels: scenario.channels,
@@ -107,6 +109,20 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
       messages: scenario.seedMessages,
     },
   });
+  let deps: ToolDependencies = localDeps;
+  if (scenario.useRealSlack) {
+    const botToken = process.env.SLACK_BOT_TOKEN;
+    if (!botToken) {
+      throw new Error(
+        "Scenario useRealSlack=true but SLACK_BOT_TOKEN is missing from .env",
+      );
+    }
+    console.log("Using REAL Slack Web API for slack reads/sends.");
+    deps = {
+      ...localDeps,
+      slack: new SlackWebApiContextPort({ token: botToken }),
+    };
+  }
   const baseRegistry = createParlarToolRegistry(deps);
   let turnIdx = 0;
   const { registry } = instrumentRegistry(baseRegistry, (entry) => {
@@ -259,10 +275,14 @@ async function runScenario(scenario: HarnessScenario, args: ParsedArgs): Promise
       console.log("(getState unavailable; workflow may already be closed)");
     }
 
-    logSection("Slack messages observed (in-memory adapter)");
-    for (const m of deps.slack.snapshotMessages()) {
-      const author = m.senderUserId === "BPARLAR" ? "AGENT" : m.senderUserId;
-      console.log(`  ${m.occurredAt} [${m.channelId}] ${author}: ${m.text}`);
+    if (!scenario.useRealSlack) {
+      logSection("Slack messages observed (in-memory adapter)");
+      for (const m of localDeps.slack.snapshotMessages()) {
+        const author = m.senderUserId === "BPARLAR" ? "AGENT" : m.senderUserId;
+        console.log(`  ${m.occurredAt} [${m.channelId}] ${author}: ${m.text}`);
+      }
+    } else {
+      logSection("Real Slack: any messages should be visible in your workspace.");
     }
   } finally {
     await cleanup();

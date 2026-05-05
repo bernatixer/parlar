@@ -1,38 +1,33 @@
 import "dotenv/config";
-import path from "node:path";
+import { anthropic } from "@ai-sdk/anthropic";
 import { NativeConnection } from "@temporalio/worker";
+import { DEFAULT_AI_MODEL } from "../ai/models.js";
 import { createLocalToolDependencies } from "../adapters/local/index.js";
-import type { ScheduledAiWorkRunner } from "../activities/conversationActivities.js";
-import { createParlarWorker } from "../temporal/worker.js";
+import { createAgentWorker } from "../temporal/agentWorker.js";
 
 const address = process.env.TEMPORAL_ADDRESS ?? "127.0.0.1:7233";
 const namespace = process.env.TEMPORAL_NAMESPACE ?? "default";
-const workflowsPath = path.resolve("src/workflows/conversationWorkflow.ts");
+const modelName = process.env.PARLAR_AI_MODEL ?? DEFAULT_AI_MODEL;
 
 async function main() {
-  const connection = await NativeConnection.connect({ address });
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      "ANTHROPIC_API_KEY is missing. Set it in .env so the worker can call the model.",
+    );
+  }
 
+  const connection = await NativeConnection.connect({ address });
   const toolDependencies = createLocalToolDependencies();
 
-  const scheduledAiWorkRunner: ScheduledAiWorkRunner = {
-    async executeScheduledAiWork() {
-      return {
-        status: "deferred",
-        reason: "scheduled AI work runner not yet wired in worker entry",
-      };
-    },
-  };
-
-  const worker = await createParlarWorker({
+  const worker = await createAgentWorker({
     connection,
     namespace,
     toolDependencies,
-    scheduledAiWorkRunner,
-    workflowsPath,
+    model: anthropic(modelName),
   });
 
   console.log(
-    `parlar worker started (temporal=${address}, namespace=${namespace})`,
+    `parlar worker started (temporal=${address}, namespace=${namespace}, model=${modelName})`,
   );
   await worker.run();
 }

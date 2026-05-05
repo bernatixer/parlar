@@ -21,9 +21,15 @@ import { instrumentRegistry, type ToolCallLogEntry } from "./instrumentedRegistr
 
 const ADDRESS = process.env.TEMPORAL_ADDRESS ?? "localhost:7233";
 const NAMESPACE = process.env.TEMPORAL_NAMESPACE ?? "default";
-const MODEL_NAME = process.env.PARLAR_AI_MODEL ?? DEFAULT_AI_MODEL;
+// Harness defaults to Haiku for fast iteration; override with PARLAR_HARNESS_MODEL
+// or fall back to PARLAR_AI_MODEL.
+const MODEL_NAME =
+  process.env.PARLAR_HARNESS_MODEL ??
+  process.env.PARLAR_AI_MODEL ??
+  "claude-haiku-4-5";
+void DEFAULT_AI_MODEL;
 const DEBOUNCE_MS = Number.parseInt(process.env.PARLAR_HARNESS_DEBOUNCE_MS ?? "500", 10);
-const MAX_AGENT_STEPS = Number.parseInt(process.env.PARLAR_HARNESS_MAX_STEPS ?? "8", 10);
+const MAX_AGENT_STEPS = Number.parseInt(process.env.PARLAR_HARNESS_MAX_STEPS ?? "5", 10);
 
 interface ParsedArgs {
   scenarioName: string;

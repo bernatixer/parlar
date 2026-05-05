@@ -188,12 +188,18 @@ export async function agentConversationWorkflow(
 
   while (!state.stopRequested) {
     const nextDeadlineMs = computeNextDeadlineMs(state);
-    const waitMs = Math.max(0, nextDeadlineMs - Date.now());
+    const rawWaitMs = nextDeadlineMs - Date.now();
+    // Avoid scheduling sub-second timers: each timer is two events in workflow
+    // history, so coalescing tiny waits into a 1s minimum keeps history lean
+    // without hurting responsiveness (signals interrupt via condition anyway).
+    const waitMs = rawWaitMs <= 0 ? 0 : Math.max(rawWaitMs, 1_000);
 
-    await Promise.race([
-      condition(() => state.stopRequested || hasImmediateWork(state)),
-      sleep(waitMs),
-    ]);
+    if (waitMs > 0) {
+      await Promise.race([
+        condition(() => state.stopRequested || hasImmediateWork(state)),
+        sleep(waitMs),
+      ]);
+    }
 
     if (state.stopRequested) break;
 

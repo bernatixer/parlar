@@ -4,4 +4,4 @@ export function agentConversationWorkflowId(conversation: AgentConversationRef):
   return `parlar:${conversation.workspaceId}:${conversation.platform}:${conversation.conversationId}`;
 }
 
-export const PARLAR_TASK_QUEUE = "main";
+export const PARLAR_TASK_QUEUE = "agent-task-queue";

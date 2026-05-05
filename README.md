@@ -97,6 +97,21 @@ src/
 
 These names are guidance. Prefer the actual project structure once one exists.
 
+## Tool Layer
+
+The first implementation includes a modular tool registry with activity-backed tools for:
+
+- Slack context reads and message sends.
+- Conversation classification, summarization, action-item extraction, and follow-up decisions.
+- Follow-up drafting, scheduling, canceling, and snoozing.
+- Workspace preferences, person context, decision records, related memory, and compact summaries.
+- Safety validation, approval requests, draft-only actions, and audit records.
+- Temporal workflow control, including `start_or_signal_conversation` and `schedule_ai_work`.
+
+`schedule_ai_work` is intentionally separate from `schedule_follow_up`. It schedules future reasoning: at the scheduled time, the conversation workflow can gather fresh context, run AI/tool work, and decide whether to send, draft, reschedule, cancel, record a summary, or do nothing.
+
+All tools are designed to run through Activities or service boundaries. Workflow code should call Activities, not tool implementations directly.
+
 ## Product Principles
 
 - Be useful without being noisy.

@@ -101,6 +101,13 @@ interface State {
   turnsRun: number;
   startedAt: IsoDateTime;
   stopRequested: boolean;
+  /**
+   * Set to true whenever a signal/command/update mutates state in a way that
+   * could change the next deadline. The main loop checks this in its
+   * condition() predicate so it can bail out of a long sleep, recompute the
+   * deadline, and start a fresh shorter timer for the freshly-arrived debounce.
+   */
+  wakeRequested: boolean;
   debounceMs: number;
   continueAsNewAfterSignals: number;
   continueAsNewAfterMs: number;
@@ -187,6 +194,7 @@ export async function agentConversationWorkflow(
   });
 
   while (!state.stopRequested) {
+    state.wakeRequested = false;
     const nextDeadlineMs = computeNextDeadlineMs(state);
     const rawWaitMs = nextDeadlineMs - Date.now();
     // Avoid scheduling sub-second timers: each timer is two events in workflow
@@ -196,7 +204,9 @@ export async function agentConversationWorkflow(
 
     if (waitMs > 0) {
       await Promise.race([
-        condition(() => state.stopRequested || hasImmediateWork(state)),
+        condition(
+          () => state.stopRequested || hasImmediateWork(state) || state.wakeRequested,
+        ),
         sleep(waitMs),
       ]);
     }
@@ -276,6 +286,7 @@ function createState(input: AgentConversationWorkflowInput): State {
       turnsRun: r.turnsRun,
       startedAt: r.startedAt,
       stopRequested: false,
+      wakeRequested: false,
       debounceMs,
       continueAsNewAfterSignals:
         input.continueAsNewAfterSignals ?? CONTINUE_AS_NEW_LIMITS.signalsSeen,
@@ -293,6 +304,7 @@ function createState(input: AgentConversationWorkflowInput): State {
     turnsRun: 0,
     startedAt: nowIso(),
     stopRequested: false,
+    wakeRequested: false,
     debounceMs,
     continueAsNewAfterSignals:
       input.continueAsNewAfterSignals ?? CONTINUE_AS_NEW_LIMITS.signalsSeen,
@@ -315,6 +327,8 @@ function onMessageSignal(state: State, sig: MessageSignal): void {
   if (sig.isFromAgent) {
     return;
   }
+
+  state.wakeRequested = true;
 
   const inbox = state.threads.get(sig.threadKey) ?? {
     threadKey: sig.threadKey,

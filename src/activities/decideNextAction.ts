@@ -59,7 +59,7 @@ export function createDecideNextAction(
   deps: DecideNextActionDependencies,
 ): AgentActivities["decideNextAction"] {
   const buildSystem = deps.systemPrompt ?? defaultSystemPrompt;
-  const maxSteps = deps.maxSteps ?? 5;
+  const maxSteps = deps.maxSteps ?? 8;
 
   return async function decideNextAction(
     input: DecideNextActionInput,
